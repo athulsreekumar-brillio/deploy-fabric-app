@@ -11,7 +11,6 @@ on:
 
 permissions:
   contents: read
-  id-token: write
 
 concurrency:
   group: fabric-deploy-${{ vars.FABRIC_WORKSPACE_ID || github.ref }}
@@ -45,18 +44,21 @@ jobs:
       - name: Check deployment settings
         env:
           AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
           AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
           AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         run: |
           test -n "$FABRIC_WORKSPACE_ID" || { echo "Set repository variable FABRIC_WORKSPACE_ID"; exit 1; }
           test -n "$AZURE_CLIENT_ID" || { echo "Set repository secret AZURE_CLIENT_ID"; exit 1; }
+          test -n "$AZURE_CLIENT_SECRET" || { echo "Set repository secret AZURE_CLIENT_SECRET"; exit 1; }
           test -n "$AZURE_TENANT_ID" || { echo "Set repository secret AZURE_TENANT_ID"; exit 1; }
           test -n "$AZURE_SUBSCRIPTION_ID" || { echo "Set repository secret AZURE_SUBSCRIPTION_ID"; exit 1; }
 
-      - name: Sign in to Azure with GitHub OIDC
+      - name: Sign in to Azure with service principal
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 

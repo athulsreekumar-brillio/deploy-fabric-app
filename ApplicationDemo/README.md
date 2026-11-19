@@ -39,11 +39,10 @@ items from the workspace.
 Configure these GitHub repository settings before running it:
 
 - Variable `FABRIC_WORKSPACE_ID`: target workspace GUID.
-- Secrets `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, and `AZURE_SUBSCRIPTION_ID`:
-  Azure application details used by `azure/login`.
-- Configure a GitHub OIDC federated credential for this repository's `main`
-  branch, enable service-principal access in Fabric tenant settings, and grant
-  the application Contributor (or higher) access to the target workspace.
+- Secrets `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`, `AZURE_TENANT_ID`, and
+  `AZURE_SUBSCRIPTION_ID`: service principal credentials used by `azure/login`.
+- Enable service-principal access in Fabric tenant settings and grant the
+  application Contributor (or higher) access to the target workspace.
 
 The GitHub runner validates the generated item package before authenticating.
 The JSON in `pipelines/` and `lakehouse/` remains a readable demo blueprint;
