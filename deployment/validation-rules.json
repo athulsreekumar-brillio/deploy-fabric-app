@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "1.0",
+  "rules": [
+    {
+      "id": "VAL001",
+      "description": "Every enabled item has a unique logicalId",
+      "severity": "ERROR"
+    },
+    {
+      "id": "VAL002",
+      "description": "Every enabled item has an existing sourcePath",
+      "severity": "ERROR"
+    },
+    {
+      "id": "VAL003",
+      "description": "Every dependency references a declared item",
+      "severity": "ERROR"
+    },
+    {
+      "id": "VAL004",
+      "description": "No circular dependencies exist",
+      "severity": "ERROR"
+    },
+    {
+      "id": "VAL005",
+      "description": "All item types are supported by the selected deployment mechanism",
+      "severity": "ERROR"
+    },
+    {
+      "id": "VAL006",
+      "description": "No secrets are stored in repository configuration",
+      "severity": "ERROR"
+    }
+  ]
+}

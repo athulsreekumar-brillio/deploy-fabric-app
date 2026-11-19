@@ -1,0 +1,92 @@
+{
+  "schemaVersion": "1.0",
+  "kind": "fabric-data-pipeline-blueprint",
+  "name": "Customer_360_Demo",
+  "description": "Parallel synthetic ingestion followed by lakehouse curation, aggregation, and reconciliation.",
+  "parameters": {
+    "run_id": {
+      "type": "string",
+      "defaultValue": "@pipeline().RunId"
+    }
+  },
+  "lakehouse": {
+    "logicalName": "Customer360Lakehouse",
+    "binding": "Attach this lakehouse as the default lakehouse to all referenced notebooks."
+  },
+  "activities": [
+    {
+      "name": "Ingest_Customers",
+      "type": "Notebook",
+      "notebook": "01_ingest_customers",
+      "dependsOn": [],
+      "parameters": {
+        "run_id": "@pipeline().RunId"
+      },
+      "retry": 1,
+      "timeoutMinutes": 30
+    },
+    {
+      "name": "Ingest_Transactions",
+      "type": "Notebook",
+      "notebook": "02_ingest_transactions",
+      "dependsOn": [],
+      "parameters": {
+        "run_id": "@pipeline().RunId"
+      },
+      "retry": 1,
+      "timeoutMinutes": 30
+    },
+    {
+      "name": "Transform_Silver",
+      "type": "Notebook",
+      "notebook": "03_transform_silver",
+      "dependsOn": [
+        {
+          "activity": "Ingest_Customers",
+          "condition": "Succeeded"
+        },
+        {
+          "activity": "Ingest_Transactions",
+          "condition": "Succeeded"
+        }
+      ],
+      "parameters": {
+        "run_id": "@pipeline().RunId"
+      },
+      "retry": 1,
+      "timeoutMinutes": 45
+    },
+    {
+      "name": "Build_Gold",
+      "type": "Notebook",
+      "notebook": "04_build_gold",
+      "dependsOn": [
+        {
+          "activity": "Transform_Silver",
+          "condition": "Succeeded"
+        }
+      ],
+      "parameters": {
+        "run_id": "@pipeline().RunId"
+      },
+      "retry": 1,
+      "timeoutMinutes": 45
+    },
+    {
+      "name": "Reconcile_Gold",
+      "type": "Notebook",
+      "notebook": "05_reconcile_gold",
+      "dependsOn": [
+        {
+          "activity": "Build_Gold",
+          "condition": "Succeeded"
+        }
+      ],
+      "parameters": {
+        "run_id": "@pipeline().RunId"
+      },
+      "retry": 0,
+      "timeoutMinutes": 20
+    }
+  ]
+}

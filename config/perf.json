@@ -1,0 +1,8 @@
+{
+  "environment": "PERF",
+  "region": "WESTUS",
+  "workspaceName": "HCDM-ESDF-PERF-WESTUS-WSP-01",
+  "capacityReference": "TBD_PERF_CAPACITY",
+  "keyVaultReference": "TBD_PERF_KEYVAULT",
+  "settings": {}
+}

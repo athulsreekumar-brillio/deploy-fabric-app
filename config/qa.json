@@ -1,0 +1,8 @@
+{
+  "environment": "QA",
+  "region": "WESTUS",
+  "workspaceName": "HCDM-ESDF-QA-WESTUS-WSP-01",
+  "capacityReference": "TBD_QA_CAPACITY",
+  "keyVaultReference": "TBD_QA_KEYVAULT",
+  "settings": {}
+}

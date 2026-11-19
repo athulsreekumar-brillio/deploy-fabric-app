@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "1.0",
+  "applicationId": "ESDF",
+  "applicationName": "HCDM ESDF",
+  "projectId": "HCDM",
+  "repository": "HCDM-ESDF",
+  "ownerTeam": "TBD",
+  "supportTeam": "TBD",
+  "defaultRegion": "WESTUS",
+  "environments": [
+    "DEV",
+    "QA",
+    "PERF",
+    "STAGE",
+    "PROD"
+  ],
+  "deployment": {
+    "defaultMode": "FULL",
+    "allowSelectiveDeployment": true,
+    "stopOnMandatoryFailure": true
+  }
+}

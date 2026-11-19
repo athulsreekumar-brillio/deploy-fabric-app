@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "1.0",
+  "applicationId": "ESDF",
+  "items": [
+    {
+      "logicalId": "JOB001",
+      "name": "Customer_Ingestion",
+      "itemType": "TBD_FABRIC_ITEM_TYPE",
+      "sourcePath": "fabric/pipelines/Customer_Ingestion",
+      "enabled": true,
+      "mandatory": true,
+      "deploymentOrder": 1,
+      "dependsOn": [],
+      "tags": [
+        "ingestion"
+      ]
+    },
+    {
+      "logicalId": "JOB002",
+      "name": "Customer_Transformation",
+      "itemType": "TBD_FABRIC_ITEM_TYPE",
+      "sourcePath": "fabric/notebooks/Customer_Transformation",
+      "enabled": true,
+      "mandatory": true,
+      "deploymentOrder": 2,
+      "dependsOn": [
+        "JOB001"
+      ],
+      "tags": [
+        "transformation"
+      ]
+    },
+    {
+      "logicalId": "JOB003",
+      "name": "Customer_Reconciliation",
+      "itemType": "TBD_FABRIC_ITEM_TYPE",
+      "sourcePath": "fabric/notebooks/Customer_Reconciliation",
+      "enabled": true,
+      "mandatory": true,
+      "deploymentOrder": 3,
+      "dependsOn": [
+        "JOB002"
+      ],
+      "tags": [
+        "reconciliation"
+      ]
+    }
+  ]
+}

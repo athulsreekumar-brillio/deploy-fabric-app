@@ -1,0 +1,67 @@
+{
+  "schemaVersion": "1.0",
+  "kind": "fabric-lakehouse-demo-catalog",
+  "name": "Customer360Lakehouse",
+  "description": "Logical catalog for the demo pipeline; bind notebooks to a real Fabric Lakehouse to materialize these Delta tables.",
+  "storageFormat": "Delta",
+  "layers": {
+    "bronze": {
+      "tables": [
+        "bronze_customers",
+        "bronze_transactions"
+      ]
+    },
+    "silver": {
+      "tables": [
+        "silver_customers",
+        "silver_customer_rejects",
+        "silver_transactions",
+        "silver_transaction_rejects"
+      ]
+    },
+    "gold": {
+      "tables": [
+        "gold_customer_360",
+        "gold_monthly_revenue",
+        "quality_reconciliation"
+      ]
+    }
+  },
+  "lineage": [
+    {
+      "target": "bronze_customers",
+      "source": "synthetic customer records"
+    },
+    {
+      "target": "bronze_transactions",
+      "source": "synthetic transaction records"
+    },
+    {
+      "target": "silver_customers",
+      "source": "bronze_customers"
+    },
+    {
+      "target": "silver_transactions",
+      "source": "bronze_transactions"
+    },
+    {
+      "target": "gold_customer_360",
+      "source": [
+        "silver_customers",
+        "silver_transactions"
+      ]
+    },
+    {
+      "target": "gold_monthly_revenue",
+      "source": "silver_transactions"
+    },
+    {
+      "target": "quality_reconciliation",
+      "source": [
+        "gold_customer_360",
+        "gold_monthly_revenue",
+        "silver_transactions"
+      ]
+    }
+  ]
+}

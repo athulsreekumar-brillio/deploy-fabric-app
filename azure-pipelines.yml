@@ -1,0 +1,35 @@
+# Application pipeline entry point.
+# Reusable templates are maintained in the central platform framework repository.
+# Replace the repository name and approved framework ref when the framework is created.
+
+trigger:
+  branches:
+    include:
+      - main
+
+pr:
+  branches:
+    include:
+      - main
+
+resources:
+  repositories:
+    - repository: fabricFramework
+      type: git
+      name: Platform/HCDM-FABRIC-CICD-FRAMEWORK
+      # Pin to an approved immutable tag. Update through change control.
+      ref: refs/tags/v1.0.0
+
+# This is an integration placeholder until the shared framework templates exist.
+# The application repo should not duplicate deployment implementation here.
+stages:
+  - stage: ValidateApplication
+    displayName: Validate application repository
+    jobs:
+      - job: Validate
+        steps:
+          - checkout: self
+          - script: |
+              echo "Application: HCDM-ESDF"
+              echo "Run manifest/schema and repository validation here."
+            displayName: Placeholder validation

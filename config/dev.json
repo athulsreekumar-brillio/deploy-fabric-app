@@ -1,0 +1,8 @@
+{
+  "environment": "DEV",
+  "region": "WESTUS",
+  "workspaceName": "HCDM-ESDF-DEV-WESTUS-WSP-01",
+  "capacityReference": "TBD_DEV_CAPACITY",
+  "keyVaultReference": "TBD_DEV_KEYVAULT",
+  "settings": {}
+}

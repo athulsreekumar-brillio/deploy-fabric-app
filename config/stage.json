@@ -1,0 +1,8 @@
+{
+  "environment": "STAGE",
+  "region": "WESTUS",
+  "workspaceName": "HCDM-ESDF-STAGE-WESTUS-WSP-01",
+  "capacityReference": "TBD_STAGE_CAPACITY",
+  "keyVaultReference": "TBD_STAGE_KEYVAULT",
+  "settings": {}
+}

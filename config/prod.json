@@ -1,0 +1,8 @@
+{
+  "environment": "PROD",
+  "region": "WESTUS",
+  "workspaceName": "HCDM-ESDF-PROD-WESTUS-WSP-01",
+  "capacityReference": "TBD_PROD_CAPACITY",
+  "keyVaultReference": "TBD_PROD_KEYVAULT",
+  "settings": {}
+}
