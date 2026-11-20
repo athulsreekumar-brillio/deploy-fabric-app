@@ -7,7 +7,6 @@ import re
 import tempfile
 import uuid
 
-
 APPLICATION_DIR = pathlib.Path(__file__).resolve().parents[1]
 PIPELINE_FILE = APPLICATION_DIR / "pipelines" / "customer_360_pipeline.json"
 LAKEHOUSE_LOGICAL_ID = str(uuid.uuid5(uuid.NAMESPACE_URL, "hcdm-esdf:Customer360Lakehouse"))
