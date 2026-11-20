@@ -2,10 +2,10 @@ import argparse
 import ast
 import json
 import os
-from pathlib import Path
 import re
 import tempfile
 import uuid
+from pathlib import Path
 
 
 APPLICATION_DIR = Path(__file__).resolve().parents[1]
@@ -53,27 +53,27 @@ def notebook_content(source_path):
     lines.remove(parameter_assignment)
     code = "\n".join(lines).strip()
 
-    header = """# Fabric notebook source
+    header = f"""# Fabric notebook source
 
 # METADATA ********************
 
-# META {
-# META   "kernel_info": {
+# META {{
+# META   "kernel_info": {{
 # META     "name": "synapse_pyspark"
-# META   },
-# META   "dependencies": {
-# META     "lakehouse": {
-# META       "default_lakehouse": "%s",
+# META   }},
+# META   "dependencies": {{
+# META     "lakehouse": {{
+# META       "default_lakehouse": "{LAKEHOUSE_LOGICAL_ID}",
 # META       "default_lakehouse_name": "Customer360Lakehouse",
-# META       "default_lakehouse_workspace_id": "%s",
+# META       "default_lakehouse_workspace_id": "{ZERO_GUID}",
 # META       "known_lakehouses": [
-# META         {
-# META           "id": "%s"
-# META         }
+# META         {{
+# META           "id": "{LAKEHOUSE_LOGICAL_ID}"
+# META         }}
 # META       ]
-# META     }
-# META   }
-# META }
+# META     }}
+# META   }}
+# META }}
 
 # PARAMETERS CELL ********************
 
@@ -81,14 +81,14 @@ run_id = "local-demo"
 
 # METADATA ********************
 
-# META {
+# META {{
 # META   "language": "python",
 # META   "language_group": "synapse_pyspark"
-# META }
+# META }}
 
 # CELL ********************
 
-""" % (LAKEHOUSE_LOGICAL_ID, ZERO_GUID, LAKEHOUSE_LOGICAL_ID)
+"""
     return header + code + "\n"
 
 
@@ -98,7 +98,7 @@ def load_json(path, description):
     except (OSError, json.JSONDecodeError) as error:
         raise ValueError(f"Invalid {description}: {error}") from error
     if not isinstance(value, dict):
-        raise ValueError(f"{description} must be a JSON object")
+        raise TypeError(f"{description} must be a JSON object")
     return value
 
 
@@ -164,7 +164,7 @@ def validate_source_definitions():
     lineage_sources_by_target = {}
     for entry in lineage:
         if not isinstance(entry, dict) or not isinstance(entry.get("target"), str):
-            raise ValueError("Every lineage entry must have a target table")
+            raise TypeError("Every lineage entry must have a target table")
         target = entry["target"]
         if target not in declared_tables:
             raise ValueError(f"Lineage target is not declared in a lakehouse layer: {target}")
@@ -216,7 +216,7 @@ def validate_source_definitions():
     used_notebooks = set()
     for activity in activities:
         if not isinstance(activity, dict):
-            raise ValueError("Pipeline activities must be JSON objects")
+            raise TypeError("Pipeline activities must be JSON objects")
         name = activity.get("name")
         notebook_name = activity.get("notebook")
         if not isinstance(name, str) or not name or name in activity_by_name:
@@ -281,11 +281,11 @@ def validate_source_definitions():
     for activity in activities:
         dependencies = activity.get("dependsOn", [])
         if not isinstance(dependencies, list):
-            raise ValueError("Activity dependencies must be a list")
+            raise TypeError("Activity dependencies must be a list")
         dependency_names = set()
         for dependency in dependencies:
             if not isinstance(dependency, dict):
-                raise ValueError("Dependencies must be objects with activity and condition")
+                raise TypeError("Dependencies must be objects with activity and condition")
             dependency_name = dependency.get("activity")
             if dependency_name not in activity_by_name:
                 raise ValueError(
