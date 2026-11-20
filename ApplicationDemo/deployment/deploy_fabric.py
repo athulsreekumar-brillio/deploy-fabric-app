@@ -2,10 +2,10 @@ import argparse
 import ast
 import json
 import os
+from pathlib import Path
 import re
 import tempfile
 import uuid
-from pathlib import Path
 
 
 APPLICATION_DIR = Path(__file__).resolve().parents[1]
@@ -15,7 +15,7 @@ ZERO_GUID = "00000000-0000-0000-0000-000000000000"
 
 
 def logical_id(item_type, item_name):
-    return str(uuid.uuid5(uuid.NAMESPACE_URL, "hcdm-esdf:{}:{}".format(item_type, item_name)))
+    return str(uuid.uuid5(uuid.NAMESPACE_URL, f"hcdm-esdf:{item_type}:{item_name}"))
 
 
 def write_json(path, content):
@@ -49,7 +49,7 @@ def notebook_content(source_path):
 
     parameter_assignment = 'run_id = "local-demo"'
     if lines.count(parameter_assignment) != 1:
-        raise ValueError("{} must contain one run_id assignment".format(source_path.name))
+        raise ValueError(f"{source_path.name} must contain one run_id assignment")
     lines.remove(parameter_assignment)
     code = "\n".join(lines).strip()
 
@@ -96,9 +96,9 @@ def load_json(path, description):
     try:
         value = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as error:
-        raise ValueError("Invalid {}: {}".format(description, error)) from error
+        raise ValueError(f"Invalid {description}: {error}") from error
     if not isinstance(value, dict):
-        raise ValueError("{} must be a JSON object".format(description))
+        raise ValueError(f"{description} must be a JSON object")
     return value
 
 
@@ -106,7 +106,7 @@ def notebook_table_references(source, source_path):
     try:
         tree = ast.parse(source, filename=str(source_path))
     except SyntaxError as error:
-        raise ValueError("Invalid notebook Python in {}: {}".format(source_path.name, error)) from error
+        raise ValueError(f"Invalid notebook Python in {source_path.name}: {error}") from error
 
     reads = set()
     writes = set()
@@ -118,7 +118,7 @@ def notebook_table_references(source, source_path):
             continue
         if not node.args or not isinstance(node.args[0], ast.Constant) or not isinstance(node.args[0].value, str):
             raise ValueError(
-                "{} must use a string literal with spark.{}()".format(source_path.name, method)
+                f"{source_path.name} must use a string literal with spark.{method}()"
             )
         table_name = node.args[0].value
         (reads if method == "table" else writes).add(table_name)
@@ -149,7 +149,7 @@ def validate_source_definitions():
             raise ValueError("Lakehouse layer names must use lowercase snake_case")
         tables = layer.get("tables") if isinstance(layer, dict) else None
         if not isinstance(tables, list) or not tables:
-            raise ValueError("Lakehouse layer {} must define tables".format(layer_name))
+            raise ValueError(f"Lakehouse layer {layer_name} must define tables")
         if any(not isinstance(table, str) or not re.fullmatch(r"[a-z][a-z0-9_]*", table) for table in tables):
             raise ValueError("Lakehouse table names must use lowercase snake_case")
         layer_tables.extend(tables)
@@ -167,33 +167,33 @@ def validate_source_definitions():
             raise ValueError("Every lineage entry must have a target table")
         target = entry["target"]
         if target not in declared_tables:
-            raise ValueError("Lineage target is not declared in a lakehouse layer: {}".format(target))
+            raise ValueError(f"Lineage target is not declared in a lakehouse layer: {target}")
         if target in lineage_targets:
-            raise ValueError("Lineage target is declared more than once: {}".format(target))
+            raise ValueError(f"Lineage target is declared more than once: {target}")
         lineage_targets.add(target)
         sources = entry.get("source")
         if isinstance(sources, str):
             sources = [sources]
         if not isinstance(sources, list) or not sources:
-            raise ValueError("Lineage target {} must define one or more sources".format(target))
+            raise ValueError(f"Lineage target {target} must define one or more sources")
         for source in sources:
             if not isinstance(source, str) or not source:
                 raise ValueError("Lineage sources must be non-empty strings")
             if source not in declared_tables and not source.startswith("synthetic "):
-                raise ValueError("Lineage source is neither a declared table nor synthetic input: {}".format(source))
+                raise ValueError(f"Lineage source is neither a declared table nor synthetic input: {source}")
         lineage_sources_by_target[target] = {
             source for source in sources if source in declared_tables
         }
     if lineage_targets != declared_tables:
         missing = sorted(declared_tables - lineage_targets)
-        raise ValueError("Lakehouse tables missing lineage: {}".format(", ".join(missing)))
+        raise ValueError(f"Lakehouse tables missing lineage: {', '.join(missing)}")
 
     lineage_visited = set()
     lineage_active = set()
 
     def visit_lineage(table):
         if table in lineage_active:
-            raise ValueError("Lakehouse lineage cycle includes table {}".format(table))
+            raise ValueError(f"Lakehouse lineage cycle includes table {table}")
         if table in lineage_visited:
             return
         lineage_active.add(table)
@@ -222,40 +222,39 @@ def validate_source_definitions():
         if not isinstance(name, str) or not name or name in activity_by_name:
             raise ValueError("Pipeline activity names must be present and unique")
         if activity.get("type") != "Notebook":
-            raise ValueError("Activity {} must be a Notebook activity".format(name))
+            raise ValueError(f"Activity {name} must be a Notebook activity")
         if activity.get("parameters", {}).get("run_id") != "@pipeline().RunId":
-            raise ValueError("Activity {} must pass the pipeline run_id to its notebook".format(name))
+            raise ValueError(f"Activity {name} must pass the pipeline run_id to its notebook")
         if not isinstance(notebook_name, str) or not notebook_name or notebook_name in used_notebooks:
             raise ValueError("Notebook references must be present and unique")
         used_notebooks.add(notebook_name)
         notebook_path = APPLICATION_DIR / "notebooks" / (notebook_name + ".py")
         if not notebook_path.is_file():
-            raise ValueError("Notebook source not found: {}".format(notebook_path))
+            raise ValueError(f"Notebook source not found: {notebook_path}")
         source = notebook_path.read_text(encoding="utf-8")
         if source.count('run_id = "local-demo"') != 1:
-            raise ValueError("{} must define exactly one run_id parameter".format(notebook_path.name))
+            raise ValueError(f"{notebook_path.name} must define exactly one run_id parameter")
         reads, writes = notebook_table_references(source, notebook_path)
         unknown_tables = (reads | writes) - declared_tables
         if unknown_tables:
             raise ValueError(
-                "{} references tables missing from the lakehouse catalog: {}".format(
-                    notebook_path.name, ", ".join(sorted(unknown_tables))
-                )
+                f"{notebook_path.name} references tables missing from the lakehouse catalog: "
+                f"{', '.join(sorted(unknown_tables))}"
             )
         notebook_writes.update(writes)
         reads_by_activity[name] = reads
         for table in writes:
             if table in writer_by_table:
-                raise ValueError("Lakehouse table {} is written by multiple notebooks".format(table))
+                raise ValueError(f"Lakehouse table {table} is written by multiple notebooks")
             writer_by_table[table] = name
         activity_by_name[name] = activity
 
         timeout = activity.get("timeoutMinutes")
         retries = activity.get("retry")
         if not isinstance(timeout, int) or isinstance(timeout, bool) or timeout <= 0:
-            raise ValueError("Activity {} must have a positive integer timeoutMinutes".format(name))
+            raise ValueError(f"Activity {name} must have a positive integer timeoutMinutes")
         if not isinstance(retries, int) or isinstance(retries, bool) or retries < 0:
-            raise ValueError("Activity {} must have a non-negative integer retry count".format(name))
+            raise ValueError(f"Activity {name} must have a non-negative integer retry count")
 
     available_notebooks = {
         notebook_path.stem
@@ -265,18 +264,18 @@ def validate_source_definitions():
         missing = sorted(used_notebooks - available_notebooks)
         orphaned = sorted(available_notebooks - used_notebooks)
         raise ValueError(
-            "Notebook files and pipeline references differ (missing: {}; unreferenced: {})".format(
-                ", ".join(missing) or "none", ", ".join(orphaned) or "none"
-            )
+            f"Notebook files and pipeline references differ (missing: "
+            f"{', '.join(missing) or 'none'}; unreferenced: "
+            f"{', '.join(orphaned) or 'none'})"
         )
 
     if notebook_writes != declared_tables:
         missing = sorted(declared_tables - notebook_writes)
         unlisted = sorted(notebook_writes - declared_tables)
         raise ValueError(
-            "Notebook writes do not match catalog tables (missing: {}; unlisted: {})".format(
-                ", ".join(missing) or "none", ", ".join(unlisted) or "none"
-            )
+            f"Notebook writes do not match catalog tables (missing: "
+            f"{', '.join(missing) or 'none'}; unlisted: "
+            f"{', '.join(unlisted) or 'none'})"
         )
 
     for activity in activities:
@@ -290,10 +289,10 @@ def validate_source_definitions():
             dependency_name = dependency.get("activity")
             if dependency_name not in activity_by_name:
                 raise ValueError(
-                    "{} depends on unknown activity {}".format(activity["name"], dependency_name)
+                    f"{activity['name']} depends on unknown activity {dependency_name}"
                 )
             if dependency_name == activity["name"] or dependency_name in dependency_names:
-                raise ValueError("Activity {} has a self or duplicate dependency".format(activity["name"]))
+                raise ValueError(f"Activity {activity['name']} has a self or duplicate dependency")
             dependency_names.add(dependency_name)
             if dependency.get("condition") not in ("Succeeded", "Failed", "Skipped", "Completed"):
                 raise ValueError("Activity dependency has an unsupported condition")
@@ -303,7 +302,7 @@ def validate_source_definitions():
 
     def visit(name):
         if name in active:
-            raise ValueError("Pipeline dependency cycle includes activity {}".format(name))
+            raise ValueError(f"Pipeline dependency cycle includes activity {name}")
         if name in visited:
             return
         active.add(name)
@@ -321,7 +320,7 @@ def validate_source_definitions():
     for table, writer in writer_by_table.items():
         if not lineage_sources_by_target[table].issubset(reads_by_activity[writer]):
             raise ValueError(
-                "Lakehouse lineage for {} does not match notebook inputs".format(table)
+                f"Lakehouse lineage for {table} does not match notebook inputs"
             )
 
     ancestors_by_activity = {}
@@ -343,9 +342,7 @@ def validate_source_definitions():
             writer = writer_by_table.get(table)
             if writer != activity_name and writer not in available_activities:
                 raise ValueError(
-                    "Pipeline activity {} reads {} before its writer activity {}".format(
-                        activity_name, table, writer
-                    )
+                    f"Pipeline activity {activity_name} reads {table} before its writer activity {writer}"
                 )
     return pipeline
 
@@ -362,7 +359,7 @@ def build_workspace(repository_directory):
             raise ValueError("Notebook references must be present and unique")
         notebook_path = APPLICATION_DIR / "notebooks" / (notebook_name + ".py")
         if not notebook_path.is_file():
-            raise FileNotFoundError("Notebook source not found: {}".format(notebook_path))
+            raise FileNotFoundError(f"Notebook source not found: {notebook_path}")
         notebook_id = logical_id("Notebook", notebook_name)
         notebooks[notebook_name] = notebook_id
 
@@ -395,9 +392,7 @@ def build_workspace(repository_directory):
             dependency_name = dependency["activity"]
             if dependency_name not in activity_names:
                 raise ValueError(
-                    "{} depends on unknown activity {}".format(
-                        activity["name"], dependency_name
-                    )
+                    f"{activity['name']} depends on unknown activity {dependency_name}"
                 )
             dependencies.append(
                 {
@@ -414,7 +409,7 @@ def build_workspace(repository_directory):
                 "type": "TridentNotebook",
                 "dependsOn": dependencies,
                 "policy": {
-                    "timeout": "0.{:02d}:{:02d}:00".format(hours, minutes),
+                    "timeout": f"0.{hours:02d}:{minutes:02d}:00",
                     "retry": int(activity.get("retry", 0)),
                     "retryIntervalInSeconds": 30,
                     "secureInput": False,
@@ -473,20 +468,20 @@ def validate_workspace(repository_directory):
     for item_directory in item_directories:
         platform_file = item_directory / ".platform"
         if not platform_file.is_file():
-            raise ValueError("Missing .platform file: {}".format(item_directory.name))
+            raise ValueError(f"Missing .platform file: {item_directory.name}")
         platform = load_json(platform_file, platform_file.name)
         if platform.get("metadata", {}).get("displayName") != item_directory.name.rsplit(".", 1)[0]:
-            raise ValueError("Fabric item name does not match platform metadata: {}".format(item_directory.name))
+            raise ValueError(f"Fabric item name does not match platform metadata: {item_directory.name}")
         item_type = item_directory.name.rsplit(".", 1)[-1]
         if platform.get("metadata", {}).get("type") != item_type:
-            raise ValueError("Fabric item type does not match platform metadata: {}".format(item_directory.name))
+            raise ValueError(f"Fabric item type does not match platform metadata: {item_directory.name}")
         item_logical_id = platform["config"]["logicalId"]
         try:
             uuid.UUID(item_logical_id)
         except (ValueError, TypeError) as error:
-            raise ValueError("Fabric item has an invalid logicalId: {}".format(item_directory.name)) from error
+            raise ValueError(f"Fabric item has an invalid logicalId: {item_directory.name}") from error
         if item_logical_id in seen_logical_ids:
-            raise ValueError("Duplicate logicalId: {}".format(item_logical_id))
+            raise ValueError(f"Duplicate logicalId: {item_logical_id}")
         seen_logical_ids.add(item_logical_id)
 
         if item_directory.name.endswith(".Notebook"):
@@ -495,7 +490,7 @@ def validate_workspace(repository_directory):
             )
             notebook_table_references(source, item_directory / "notebook-content.py")
             if '"default_lakehouse_name": "Customer360Lakehouse"' not in source:
-                raise ValueError("Notebook is not bound to Customer360Lakehouse: {}".format(item_directory.name))
+                raise ValueError(f"Notebook is not bound to Customer360Lakehouse: {item_directory.name}")
         elif item_directory.name.endswith(".Lakehouse"):
             load_json(item_directory / "lakehouse.metadata.json", "Fabric Lakehouse metadata")
         elif item_directory.name.endswith(".DataPipeline"):
@@ -513,7 +508,7 @@ def validate_workspace(repository_directory):
                 for dependency in activity["dependsOn"]:
                     if dependency["activity"] not in names:
                         raise ValueError(
-                            "Unknown dependency in {}".format(item_directory.name)
+                            f"Unknown dependency in {item_directory.name}"
                         )
                 properties = activity.get("typeProperties", {})
                 notebook_id = properties.get("notebookId")
@@ -527,7 +522,7 @@ def validate_workspace(repository_directory):
                     None,
                 )
                 if notebook_id != expected_notebook_id:
-                    raise ValueError("Fabric pipeline references the wrong notebook for {}".format(notebook_name))
+                    raise ValueError(f"Fabric pipeline references the wrong notebook for {notebook_name}")
                 if properties.get("workspaceId") != ZERO_GUID:
                     raise ValueError("Fabric pipeline workspace references must use the deployment placeholder")
 
