@@ -1,0 +1,59 @@
+name: Fabric CI
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fabric-ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  code-checks:
+    name: Code checks and security scans
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install check tools
+        run: python -m pip install ruff bandit pip-audit
+
+      - name: Lint deployment code
+        run: ruff check ApplicationDemo/deployment
+
+      - name: Lint notebook Python
+        run: ruff check ApplicationDemo/notebooks --select E,F --ignore F821
+
+      - name: Scan Python code
+        run: bandit -r ApplicationDemo/deployment ApplicationDemo/notebooks --severity-level medium --confidence-level medium
+
+      - name: Audit Python dependencies
+        run: pip-audit -r ApplicationDemo/deployment/requirements.txt
+
+  fabric-validation:
+    name: Fabric item validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate notebooks, lakehouse, and pipeline
+        run: python ApplicationDemo/deployment/deploy_fabric.py --validate-only

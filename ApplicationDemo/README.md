@@ -47,3 +47,19 @@ Configure these GitHub repository settings before running it:
 The GitHub runner validates the generated item package before authenticating.
 The JSON in `pipelines/` and `lakehouse/` remains a readable demo blueprint;
 the deployment adapter produces the Fabric item files required by the publisher.
+
+## Pull request CI
+
+The workflow at `.github/workflows/ci-fabric.yml` runs for pull requests
+targeting `main` and again after changes are merged. It checks deployment code
+and notebook Python with Ruff, scans Python code with Bandit, audits
+`requirements.txt` with `pip-audit`, and validates notebook syntax/table usage,
+lakehouse layers and lineage, pipeline activities/dependencies, and generated
+Fabric item references. These are static CI checks; they do not execute Spark
+notebooks against a live Fabric workspace.
+
+To make these checks required before merging, configure a ruleset or branch
+protection rule for `main` and require both status checks:
+
+- `Code checks and security scans`
+- `Fabric item validation`

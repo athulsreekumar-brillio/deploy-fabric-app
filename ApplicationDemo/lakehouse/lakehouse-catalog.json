@@ -41,7 +41,15 @@
       "source": "bronze_customers"
     },
     {
+      "target": "silver_customer_rejects",
+      "source": "bronze_customers"
+    },
+    {
       "target": "silver_transactions",
+      "source": "bronze_transactions"
+    },
+    {
+      "target": "silver_transaction_rejects",
       "source": "bronze_transactions"
     },
     {
