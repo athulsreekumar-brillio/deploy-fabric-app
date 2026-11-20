@@ -2,13 +2,13 @@ import argparse
 import ast
 import json
 import os
+import pathlib
 import re
 import tempfile
 import uuid
-from pathlib import Path
 
 
-APPLICATION_DIR = Path(__file__).resolve().parents[1]
+APPLICATION_DIR = pathlib.Path(__file__).resolve().parents[1]
 PIPELINE_FILE = APPLICATION_DIR / "pipelines" / "customer_360_pipeline.json"
 LAKEHOUSE_LOGICAL_ID = str(uuid.uuid5(uuid.NAMESPACE_URL, "hcdm-esdf:Customer360Lakehouse"))
 ZERO_GUID = "00000000-0000-0000-0000-000000000000"
@@ -557,7 +557,7 @@ def main():
     args = parser.parse_args()
 
     with tempfile.TemporaryDirectory(prefix="fabric-customer360-") as directory:
-        repository_directory = Path(directory)
+        repository_directory = pathlib.Path(directory)
         build_workspace(repository_directory)
         validate_workspace(repository_directory)
         if args.validate_only:
